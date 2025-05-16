@@ -9,7 +9,7 @@ import VitalsChart from "@/components/VitalsChart";
 import AlertBadge from "@/components/AlertBadge";
 import { patientAPI, relationshipAPI } from "@/services/api";
 import { Patient, VitalSign, Alert, PatientDoctorRelationship } from "@/types";
-import { Activity, ArrowLeft, FileMedical, UserCircle, Users, Stethoscope } from "lucide-react";
+import { Activity, ArrowLeft, FileText, UserCircle, Users, Stethoscope } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const PatientDetails = () => {
@@ -141,7 +141,8 @@ const PatientDetails = () => {
   const handleResolveAlert = async (alertId: string) => {
     try {
       await patientAPI.resolveAlert(alertId);
-      setAlerts(prevAlerts => prevAlerts.filter(alert => alert !== alertId));
+      // Fix the comparison error - we need to filter alerts properly
+      setAlerts(prevAlerts => prevAlerts.filter(alert => alert.patient_id !== alertId));
       toast({
         title: "Alert resolved",
         description: "The patient alert has been marked as resolved."
@@ -182,7 +183,7 @@ const PatientDetails = () => {
             </h1>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm">
-                <FileMedical className="h-4 w-4 mr-2" />
+                <FileText className="h-4 w-4 mr-2" />
                 Add Medical Record
               </Button>
               <Button size="sm">
