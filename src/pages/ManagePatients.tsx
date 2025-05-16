@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import Navbar from "@/components/Navbar";
 import PatientCard from "@/components/PatientCard";
 import { PatientForm } from "@/components/PatientForm";
-import { simulationAPI } from "@/services/api";
+import { patientAPI, simulationAPI } from "@/services/api";
 import { Search, UserPlus, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,154 +24,18 @@ const ManagePatients = () => {
     const fetchPatients = async () => {
       setIsLoading(true);
       try {
-        // The backend doesn't seem to have a direct endpoint for listing all patients
+        // Initialize data if needed
         await simulationAPI.simulateData();
         
-        // Mock data for demonstration
-        const mockPatients = [
-          { 
-            _id: '1', 
-            name: 'James Wilson', 
-            age: 67, 
-            gender: 'Male',
-            blood_type: 'O+',
-            region: 'East',
-            lastVitals: { 
-              heart_rate: 45, 
-              temperature: 37.2, 
-              oxygen_level: 93 
-            },
-            hasAlert: true
-          },
-          { 
-            _id: '2', 
-            name: 'Emily Johnson', 
-            age: 72, 
-            gender: 'Female',
-            blood_type: 'A+',
-            region: 'West',
-            lastVitals: { 
-              heart_rate: 142, 
-              temperature: 39.1, 
-              oxygen_level: 90 
-            },
-            hasAlert: true
-          },
-          { 
-            _id: '3', 
-            name: 'Michael Brown', 
-            age: 56, 
-            gender: 'Male',
-            blood_type: 'O+',
-            region: 'North',
-            lastVitals: { 
-              heart_rate: 95, 
-              temperature: 38.8, 
-              oxygen_level: 87 
-            },
-            hasAlert: true
-          },
-          { 
-            _id: '4', 
-            name: 'Sarah Davis', 
-            age: 41, 
-            gender: 'Female',
-            blood_type: 'B-',
-            region: 'Central',
-            lastVitals: { 
-              heart_rate: 72, 
-              temperature: 36.9, 
-              oxygen_level: 98 
-            }
-          },
-          { 
-            _id: '5', 
-            name: 'Robert Miller', 
-            age: 62, 
-            gender: 'Male',
-            blood_type: 'AB+',
-            region: 'South',
-            lastVitals: { 
-              heart_rate: 88, 
-              temperature: 36.9, 
-              oxygen_level: 98 
-            }
-          },
-          { 
-            _id: '6', 
-            name: 'Jennifer Lee', 
-            age: 35, 
-            gender: 'Female',
-            blood_type: 'A-',
-            region: 'Central',
-            lastVitals: { 
-              heart_rate: 72, 
-              temperature: 36.5, 
-              oxygen_level: 99 
-            }
-          },
-          { 
-            _id: '7', 
-            name: 'Thomas Wang', 
-            age: 47, 
-            gender: 'Male',
-            blood_type: 'B+',
-            region: 'East',
-            lastVitals: { 
-              heart_rate: 78, 
-              temperature: 36.7, 
-              oxygen_level: 97 
-            }
-          },
-          { 
-            _id: '8', 
-            name: 'Sophia Garcia', 
-            age: 29, 
-            gender: 'Female',
-            blood_type: 'O-',
-            region: 'West'
-          },
-          { 
-            _id: '9', 
-            name: 'Daniel Kim', 
-            age: 51, 
-            gender: 'Male',
-            blood_type: 'A+',
-            region: 'North'
-          },
-          { 
-            _id: '10', 
-            name: 'Olivia Smith', 
-            age: 22, 
-            gender: 'Female',
-            blood_type: 'AB-',
-            region: 'South'
-          },
-          { 
-            _id: '11', 
-            name: 'William Johnson', 
-            age: 68, 
-            gender: 'Male',
-            blood_type: 'B+',
-            region: 'Central'
-          },
-          { 
-            _id: '12', 
-            name: 'Emma Davis', 
-            age: 31, 
-            gender: 'Female',
-            blood_type: 'A-',
-            region: 'East'
-          }
-        ];
-        
-        setPatients(mockPatients);
-        setFilteredPatients(mockPatients);
+        // In a real implementation, we would fetch patients from the API
+        // For now, we'll leave patients as an empty array since the API isn't connected
+        setPatients([]);
+        setFilteredPatients([]);
       } catch (error) {
         console.error("Error fetching patients:", error);
         toast({
           title: "Error",
-          description: "Failed to load patients. Using sample data instead.",
+          description: "Failed to load patients. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -205,19 +69,32 @@ const ManagePatients = () => {
       title: "Patient Added",
       description: "New patient has been successfully registered.",
     });
-    // In a real application, we would fetch the new patient data
-    // For demo, just add a placeholder
-    const newPatient = {
-      _id: patientId,
-      name: "New Patient",
-      age: 30,
-      gender: "Other",
-      blood_type: "O+",
-      region: "Central",
-    };
     
-    setPatients([newPatient, ...patients]);
-    setFilteredPatients([newPatient, ...filteredPatients]);
+    // In a real implementation, we would fetch the new patient data
+    // For now, we'll just refresh the patients list
+    fetchPatients();
+  };
+  
+  const fetchPatients = async () => {
+    setIsLoading(true);
+    try {
+      // Initialize data if needed
+      await simulationAPI.simulateData();
+      
+      // In a real implementation, we would fetch patients from the API
+      // For now, we'll leave patients as an empty array
+      setPatients([]);
+      setFilteredPatients([]);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load patients. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -284,7 +161,7 @@ const ManagePatients = () => {
           <Card className="w-full">
             <CardContent className="flex flex-col items-center justify-center p-12">
               <Users className="h-12 w-12 mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground mb-4">No patients found matching your search</p>
+              <p className="text-muted-foreground mb-4">No patients found</p>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline">

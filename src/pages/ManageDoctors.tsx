@@ -24,90 +24,18 @@ const ManageDoctors = () => {
     const fetchDoctors = async () => {
       setIsLoading(true);
       try {
-        // The backend doesn't seem to have a direct endpoint for listing all doctors
+        // Initialize data if needed
         await simulationAPI.simulateData();
         
-        // Mock data for demonstration
-        const mockDoctors = [
-          { 
-            _id: 'd1', 
-            name: 'Dr. Robert Smith', 
-            specialization: 'Cardiology',
-            region: 'North',
-            patientCount: 5
-          },
-          { 
-            _id: 'd2', 
-            name: 'Dr. Sarah Johnson', 
-            specialization: 'Neurology',
-            region: 'West',
-            patientCount: 7
-          },
-          { 
-            _id: 'd3', 
-            name: 'Dr. Michael Brown', 
-            specialization: 'Oncology',
-            region: 'East',
-            patientCount: 3
-          },
-          { 
-            _id: 'd4', 
-            name: 'Dr. Jennifer Lee', 
-            specialization: 'Pediatrics',
-            region: 'South',
-            patientCount: 10
-          },
-          { 
-            _id: 'd5', 
-            name: 'Dr. David Wilson', 
-            specialization: 'General Practice',
-            region: 'Central',
-            patientCount: 12
-          },
-          { 
-            _id: 'd6', 
-            name: 'Dr. Maria Garcia', 
-            specialization: 'Surgery',
-            region: 'North',
-            patientCount: 6
-          },
-          { 
-            _id: 'd7', 
-            name: 'Dr. James Taylor', 
-            specialization: 'Endocrinology',
-            region: 'West',
-            patientCount: 4
-          },
-          { 
-            _id: 'd8', 
-            name: 'Dr. Emily Chen', 
-            specialization: 'Dermatology',
-            region: 'East',
-            patientCount: 8
-          },
-          { 
-            _id: 'd9', 
-            name: 'Dr. Thomas Wang', 
-            specialization: 'Ophthalmology',
-            region: 'South',
-            patientCount: 5
-          },
-          { 
-            _id: 'd10', 
-            name: 'Dr. Amanda Miller', 
-            specialization: 'Psychiatry',
-            region: 'Central',
-            patientCount: 9
-          }
-        ];
-        
-        setDoctors(mockDoctors);
-        setFilteredDoctors(mockDoctors);
+        // In a real implementation, we would fetch doctors from the API
+        // For now, we'll leave doctors as an empty array
+        setDoctors([]);
+        setFilteredDoctors([]);
       } catch (error) {
         console.error("Error fetching doctors:", error);
         toast({
           title: "Error",
-          description: "Failed to load doctors. Using sample data instead.",
+          description: "Failed to load doctors. Please try again later.",
           variant: "destructive",
         });
       } finally {
@@ -141,18 +69,32 @@ const ManageDoctors = () => {
       title: "Doctor Added",
       description: "New doctor has been successfully registered.",
     });
-    // In a real application, we would fetch the new doctor data
-    // For demo, just add a placeholder
-    const newDoctor = {
-      _id: doctorId,
-      name: "Dr. New Doctor",
-      specialization: "General Practice",
-      region: "Central",
-      patientCount: 0
-    };
     
-    setDoctors([newDoctor, ...doctors]);
-    setFilteredDoctors([newDoctor, ...filteredDoctors]);
+    // In a real implementation, we would fetch the new doctor data
+    // For now, we'll just refresh the doctors list
+    fetchDoctors();
+  };
+  
+  const fetchDoctors = async () => {
+    setIsLoading(true);
+    try {
+      // Initialize data if needed
+      await simulationAPI.simulateData();
+      
+      // In a real implementation, we would fetch doctors from the API
+      // For now, we'll leave doctors as an empty array
+      setDoctors([]);
+      setFilteredDoctors([]);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load doctors. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -216,7 +158,7 @@ const ManageDoctors = () => {
           <Card className="w-full">
             <CardContent className="flex flex-col items-center justify-center p-12">
               <Stethoscope className="h-12 w-12 mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground mb-4">No doctors found matching your search</p>
+              <p className="text-muted-foreground mb-4">No doctors found</p>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline">

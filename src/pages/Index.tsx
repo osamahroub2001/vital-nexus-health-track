@@ -16,19 +16,44 @@ const Index = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [alerts, setAlerts] = useState<any[]>([]);
+  const [criticalPatients, setCriticalPatients] = useState<any[]>([]);
+  const [recentPatients, setRecentPatients] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    totalDoctors: 0,
+    alertsCount: 0
+  });
 
-  // Simulate loading patients and alerts
+  // Load data
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
       try {
+        // Initialize mock data on the backend
         await simulationAPI.simulateData();
+        
+        // In a real implementation, we would fetch the dashboard data
+        // For now, we'll leave the arrays empty and set stats to 0
+        setAlerts([]);
+        setCriticalPatients([]);
+        setRecentPatients([]);
+        setStats({
+          totalPatients: 0,
+          totalDoctors: 0,
+          alertsCount: 0
+        });
+        
         toast({
           title: "Data loaded",
-          description: "Sample healthcare data has been loaded."
+          description: "Healthcare data has been loaded."
         });
       } catch (error) {
         console.error("Failed to initialize data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load data. Please try again.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -40,6 +65,10 @@ const Index = () => {
 
   const handleResolveAlert = (alertId: string) => {
     setAlerts((prevAlerts) => prevAlerts.filter(alert => alert.id !== alertId));
+    toast({
+      title: "Alert Resolved",
+      description: "The patient alert has been marked as resolved."
+    });
   };
 
   return (
@@ -80,9 +109,9 @@ const Index = () => {
                       <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">20</div>
+                      <div className="text-2xl font-bold">{stats.totalPatients}</div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Across 5 regions
+                        Across all regions
                       </p>
                     </CardContent>
                   </Card>
@@ -92,7 +121,7 @@ const Index = () => {
                       <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-alert-600">{alerts.length || 3}</div>
+                      <div className="text-2xl font-bold text-alert-600">{stats.alertsCount}</div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Requiring attention
                       </p>
@@ -104,7 +133,7 @@ const Index = () => {
                       <CardTitle className="text-sm font-medium">Total Doctors</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">10</div>
+                      <div className="text-2xl font-bold">{stats.totalDoctors}</div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Various specializations
                       </p>
@@ -115,8 +144,8 @@ const Index = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Critical Patients</h2>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground" disabled>
-                      See all
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                      <Link to="/patients">See all</Link>
                     </Button>
                   </div>
                   
@@ -125,72 +154,30 @@ const Index = () => {
                       Array(4).fill(0).map((_, i) => (
                         <Card key={i} className="h-32 animate-pulse bg-muted" />
                       ))
+                    ) : criticalPatients.length > 0 ? (
+                      criticalPatients.map(patient => (
+                        <Link key={patient._id} to={`/patients/${patient._id}`} className="block hover:no-underline">
+                          <PatientCard 
+                            patient={{ 
+                              _id: patient._id, 
+                              name: patient.name, 
+                              age: patient.age, 
+                              gender: patient.gender,
+                              region: patient.region,
+                              blood_type: patient.blood_type
+                            }} 
+                            lastVitals={patient.lastVitals}
+                            hasAlert={patient.hasAlert}
+                          />
+                        </Link>
+                      ))
                     ) : (
-                      <>
-                        <PatientCard 
-                          patient={{ 
-                            _id: '1', 
-                            name: 'James Wilson', 
-                            age: 67, 
-                            gender: 'Male',
-                            region: 'East'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 45, 
-                            temperature: 37.2, 
-                            oxygen_level: 93 
-                          }}
-                          hasAlert={true}
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '2', 
-                            name: 'Emily Johnson', 
-                            age: 72, 
-                            gender: 'Female',
-                            blood_type: 'A+',
-                            region: 'West'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 142, 
-                            temperature: 39.1, 
-                            oxygen_level: 90 
-                          }}
-                          hasAlert={true}
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '3', 
-                            name: 'Michael Brown', 
-                            age: 56, 
-                            gender: 'Male',
-                            blood_type: 'O+',
-                            region: 'North'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 95, 
-                            temperature: 38.8, 
-                            oxygen_level: 87 
-                          }}
-                          hasAlert={true}
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '4', 
-                            name: 'Sarah Davis', 
-                            age: 41, 
-                            gender: 'Female',
-                            blood_type: 'B-',
-                            region: 'Central'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 122, 
-                            temperature: 37.9, 
-                            oxygen_level: 95 
-                          }}
-                          hasAlert={false}
-                        />
-                      </>
+                      <Card className="col-span-2">
+                        <CardContent className="flex flex-col items-center justify-center p-8">
+                          <Activity className="h-10 w-10 mb-2 text-muted-foreground opacity-50" />
+                          <p className="text-muted-foreground">No critical patients</p>
+                        </CardContent>
+                      </Card>
                     )}
                   </div>
                 </div>
@@ -200,8 +187,8 @@ const Index = () => {
                 <div className="space-y-4 mt-2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Recently Added Patients</h2>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground" disabled>
-                      See all
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                      <Link to="/patients">See all</Link>
                     </Button>
                   </div>
                   
@@ -210,84 +197,30 @@ const Index = () => {
                       Array(6).fill(0).map((_, i) => (
                         <Card key={i} className="h-40 animate-pulse bg-muted" />
                       ))
+                    ) : recentPatients.length > 0 ? (
+                      recentPatients.map(patient => (
+                        <Link key={patient._id} to={`/patients/${patient._id}`} className="block hover:no-underline">
+                          <PatientCard 
+                            patient={{ 
+                              _id: patient._id, 
+                              name: patient.name, 
+                              age: patient.age, 
+                              gender: patient.gender,
+                              blood_type: patient.blood_type,
+                              region: patient.region
+                            }} 
+                            lastVitals={patient.lastVitals}
+                            hasAlert={patient.hasAlert}
+                          />
+                        </Link>
+                      ))
                     ) : (
-                      <>
-                        <PatientCard 
-                          patient={{ 
-                            _id: '5', 
-                            name: 'Robert Miller', 
-                            age: 62, 
-                            gender: 'Male',
-                            blood_type: 'AB+',
-                            region: 'South'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 88, 
-                            temperature: 36.9, 
-                            oxygen_level: 98 
-                          }}
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '6', 
-                            name: 'Jennifer Lee', 
-                            age: 35, 
-                            gender: 'Female',
-                            blood_type: 'A-',
-                            region: 'Central'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 72, 
-                            temperature: 36.5, 
-                            oxygen_level: 99 
-                          }}
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '7', 
-                            name: 'Thomas Wang', 
-                            age: 47, 
-                            gender: 'Male',
-                            blood_type: 'B+',
-                            region: 'East'
-                          }} 
-                          lastVitals={{ 
-                            heart_rate: 78, 
-                            temperature: 36.7, 
-                            oxygen_level: 97 
-                          }}
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '8', 
-                            name: 'Sophia Garcia', 
-                            age: 29, 
-                            gender: 'Female',
-                            blood_type: 'O-',
-                            region: 'West'
-                          }} 
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '9', 
-                            name: 'Daniel Kim', 
-                            age: 51, 
-                            gender: 'Male',
-                            blood_type: 'A+',
-                            region: 'North'
-                          }} 
-                        />
-                        <PatientCard 
-                          patient={{ 
-                            _id: '10', 
-                            name: 'Olivia Smith', 
-                            age: 22, 
-                            gender: 'Female',
-                            blood_type: 'AB-',
-                            region: 'South'
-                          }} 
-                        />
-                      </>
+                      <Card className="col-span-3">
+                        <CardContent className="flex flex-col items-center justify-center p-8">
+                          <Users className="h-10 w-10 mb-2 text-muted-foreground opacity-50" />
+                          <p className="text-muted-foreground">No patients found</p>
+                        </CardContent>
+                      </Card>
                     )}
                   </div>
                 </div>
@@ -313,67 +246,19 @@ const Index = () => {
                   Array(3).fill(0).map((_, i) => (
                     <div key={i} className="h-8 animate-pulse bg-muted rounded-full" />
                   ))
+                ) : alerts.length > 0 ? (
+                  alerts.map((alert, index) => (
+                    <AlertBadge 
+                      key={index}
+                      alertId={alert.id}
+                      patientName={alert.patientName}
+                      alerts={alert.alerts}
+                      status={alert.status}
+                      timestamp={alert.timestamp}
+                      onResolved={() => handleResolveAlert(alert.id)}
+                    />
+                  ))
                 ) : (
-                  <>
-                    <AlertBadge 
-                      alertId="alert1"
-                      patientName="James Wilson"
-                      alerts={[
-                        {
-                          vital: 'heart_rate',
-                          value: 45,
-                          threshold_min: 60,
-                          threshold_max: 100,
-                          timestamp: new Date().toISOString()
-                        }
-                      ]}
-                      status="new"
-                      timestamp={new Date().toISOString()}
-                      onResolved={() => handleResolveAlert('alert1')}
-                    />
-                    <AlertBadge 
-                      alertId="alert2"
-                      patientName="Emily Johnson"
-                      alerts={[
-                        {
-                          vital: 'temperature',
-                          value: 39.1,
-                          threshold_min: 35.0,
-                          threshold_max: 38.0,
-                          timestamp: new Date().toISOString()
-                        },
-                        {
-                          vital: 'heart_rate',
-                          value: 142,
-                          threshold_min: 60,
-                          threshold_max: 100,
-                          timestamp: new Date().toISOString()
-                        }
-                      ]}
-                      status="new"
-                      timestamp={new Date().toISOString()}
-                      onResolved={() => handleResolveAlert('alert2')}
-                    />
-                    <AlertBadge 
-                      alertId="alert3"
-                      patientName="Michael Brown"
-                      alerts={[
-                        {
-                          vital: 'oxygen_level',
-                          value: 87,
-                          threshold_min: 95,
-                          threshold_max: 100,
-                          timestamp: new Date().toISOString()
-                        }
-                      ]}
-                      status="new"
-                      timestamp={new Date().toISOString()}
-                      onResolved={() => handleResolveAlert('alert3')}
-                    />
-                  </>
-                )}
-                
-                {!isLoading && alerts.length === 0 && (
                   <div className="text-center py-6 text-muted-foreground">
                     <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>No active alerts</p>

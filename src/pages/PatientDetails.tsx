@@ -46,90 +46,15 @@ const PatientDetails = () => {
         console.error("Error fetching patient data:", error);
         toast({
           title: "Error",
-          description: "Failed to load patient data. Using sample data instead.",
+          description: "Failed to load patient data. Please try again later.",
           variant: "destructive",
         });
         
-        // Use sample data for demo purposes
-        setPatient({
-          _id: patientId || '1',
-          name: 'James Wilson',
-          age: 67,
-          gender: 'Male',
-          blood_type: 'O+',
-          region: 'East',
-          medical_history: {
-            conditions: ['Hypertension', 'Diabetes'],
-            allergies: ['Penicillin'],
-            surgeries: 2
-          }
-        });
-        
-        // Sample vitals data
-        const now = new Date();
-        const sampleVitals = Array(24).fill(0).map((_, i) => {
-          const time = new Date(now);
-          time.setHours(now.getHours() - 24 + i);
-          
-          return {
-            timestamp: time.toISOString(),
-            patient_id: patientId || '1',
-            heart_rate: Math.floor(Math.random() * 30) + 65,
-            blood_pressure_systolic: Math.floor(Math.random() * 20) + 110,
-            blood_pressure_diastolic: Math.floor(Math.random() * 10) + 70,
-            temperature: Math.round((Math.random() * 1.5 + 36.2) * 10) / 10,
-            oxygen_level: Math.floor(Math.random() * 5) + 95,
-          };
-        });
-        
-        // Add one abnormal reading
-        const abnormalIndex = Math.floor(Math.random() * sampleVitals.length);
-        sampleVitals[abnormalIndex].heart_rate = 45;
-        sampleVitals[abnormalIndex].oxygen_level = 88;
-        
-        setVitals(sampleVitals);
-        
-        // Sample alerts
-        setAlerts([{
-          patient_id: patientId || '1',
-          patient_name: 'James Wilson',
-          alerts: [
-            {
-              vital: 'heart_rate',
-              value: 45,
-              threshold_min: 60,
-              threshold_max: 100,
-              timestamp: sampleVitals[abnormalIndex].timestamp
-            },
-            {
-              vital: 'oxygen_level',
-              value: 88,
-              threshold_min: 95,
-              threshold_max: 100,
-              timestamp: sampleVitals[abnormalIndex].timestamp
-            }
-          ],
-          status: 'new',
-          created_at: sampleVitals[abnormalIndex].timestamp
-        }]);
-        
-        // Sample doctors
-        setDoctors([
-          {
-            doctor_id: 'd1',
-            doctor_name: 'Dr. Robert Smith',
-            specialization: 'Cardiology',
-            relationship_type: 'PRIMARY_CARE',
-            since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            doctor_id: 'd2',
-            doctor_name: 'Dr. Sarah Johnson',
-            specialization: 'Endocrinology',
-            relationship_type: 'SPECIALIST',
-            since: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ]);
+        // Set empty data on error
+        setPatient(null);
+        setVitals([]);
+        setAlerts([]);
+        setDoctors([]);
       } finally {
         setIsLoading(false);
       }
@@ -141,14 +66,19 @@ const PatientDetails = () => {
   const handleResolveAlert = async (alertId: string) => {
     try {
       await patientAPI.resolveAlert(alertId);
-      // Fix the comparison error - we need to filter alerts properly
-      setAlerts(prevAlerts => prevAlerts.filter(alert => alert.patient_id !== alertId));
+      // Update alerts list by removing the resolved alert
+      setAlerts(prevAlerts => prevAlerts.filter(alert => `alert-${alert.patient_id}` !== alertId));
       toast({
         title: "Alert resolved",
         description: "The patient alert has been marked as resolved."
       });
     } catch (error) {
       console.error("Failed to resolve alert:", error);
+      toast({
+        title: "Error",
+        description: "Failed to resolve alert. Please try again.",
+        variant: "destructive"
+      });
     }
   };
   
@@ -199,7 +129,7 @@ const PatientDetails = () => {
             <div className="h-64 animate-pulse bg-muted rounded-lg"></div>
             <div className="lg:col-span-2 h-64 animate-pulse bg-muted rounded-lg"></div>
           </div>
-        ) : (
+        ) : patient ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="space-y-6">
               <Card>
@@ -401,6 +331,19 @@ const PatientDetails = () => {
               <VitalsChart data={vitals} title="Vital Signs History (Last 24 Hours)" />
             </div>
           </div>
+        ) : (
+          <Card className="w-full">
+            <CardContent className="flex flex-col items-center justify-center p-12">
+              <UserCircle className="h-12 w-12 mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground mb-4">Patient not found</p>
+              <Button variant="outline" asChild>
+                <Link to="/patients">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Patients
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
