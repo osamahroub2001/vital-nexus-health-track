@@ -9,6 +9,7 @@ import { useState } from "react";
 const SimulationPanel = () => {
   const [isSimulatingData, setIsSimulatingData] = useState(false);
   const [isSimulatingFailure, setIsSimulatingFailure] = useState(false);
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
   const { toast } = useToast();
 
   const handleSimulateData = async () => {
@@ -27,6 +28,11 @@ const SimulationPanel = () => {
       });
     } catch (error) {
       console.error("Simulation error:", error);
+      toast({
+        title: "Simulation Error",
+        description: "Failed to generate sample data. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSimulatingData(false);
     }
@@ -48,8 +54,41 @@ const SimulationPanel = () => {
       });
     } catch (error) {
       console.error("Failure simulation error:", error);
+      toast({
+        title: "Simulation Error",
+        description: "Failed to simulate failure. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSimulatingFailure(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsTestingConnection(true);
+    try {
+      toast({
+        title: "Connection Test",
+        description: "Testing system connection resiliency..."
+      });
+      
+      // In a real implementation, this would call an API endpoint
+      // For now we'll just simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Connection Test Complete",
+        description: "System connections are functioning properly."
+      });
+    } catch (error) {
+      console.error("Connection test error:", error);
+      toast({
+        title: "Test Error",
+        description: "Failed to test connections. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTestingConnection(false);
     }
   };
 
@@ -87,9 +126,14 @@ const SimulationPanel = () => {
             {isSimulatingFailure ? "Simulating..." : "Simulate Node Failure"}
           </Button>
           
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={handleTestConnection}
+            disabled={isTestingConnection}
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Test Connection Resiliency
+            {isTestingConnection ? "Testing..." : "Test Connection Resiliency"}
           </Button>
         </div>
       </CardContent>
