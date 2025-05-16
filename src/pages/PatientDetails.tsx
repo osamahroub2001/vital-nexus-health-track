@@ -67,7 +67,7 @@ const PatientDetails = () => {
     try {
       await patientAPI.resolveAlert(alertId);
       // Update alerts list by removing the resolved alert
-      setAlerts(prevAlerts => prevAlerts.filter(alert => `alert-${alert.patient_id}` !== alertId));
+      setAlerts(prevAlerts => prevAlerts.filter(alert => alertId !== alertId));
       toast({
         title: "Alert resolved",
         description: "The patient alert has been marked as resolved."
@@ -256,12 +256,12 @@ const PatientDetails = () => {
                       alerts.map((alert, index) => (
                         <AlertBadge 
                           key={index}
-                          alertId={`alert-${index}`}
+                          alertId={`alert-${alert.patient_id}-${index}`}
                           patientName={alert.patient_name}
                           alerts={alert.alerts}
                           status={alert.status}
                           timestamp={alert.created_at}
-                          onResolved={() => handleResolveAlert(`alert-${index}`)}
+                          onResolved={() => handleResolveAlert(`alert-${alert.patient_id}-${index}`)}
                         />
                       ))
                     ) : (
