@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 // Update base URL to handle possible remote deployment
@@ -27,7 +26,7 @@ async function fetchWithErrorHandling<T>(
       // If we're in development mode and using mock data, don't throw an error
       if (USE_MOCK_DATA) {
         console.warn(`API endpoint ${url} failed, using mock data instead`);
-        return getMockData(url) as T;
+        return getMockData(url, options) as T;
       }
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error || `API error: ${response.status}`);
@@ -38,7 +37,7 @@ async function fetchWithErrorHandling<T>(
     if (!data.success) {
       if (USE_MOCK_DATA) {
         console.warn(`API endpoint ${url} returned unsuccessful response, using mock data instead`);
-        return getMockData(url) as T;
+        return getMockData(url, options) as T;
       }
       throw new Error(data.error || 'Unknown error occurred');
     }
@@ -46,9 +45,10 @@ async function fetchWithErrorHandling<T>(
     return data;
   } catch (error) {
     // If fetch fails completely and we're using mock data, return mock data
-    if (USE_MOCK_DATA && error instanceof Error && error.message.includes('Failed to fetch')) {
+    if (USE_MOCK_DATA && error instanceof Error && 
+        (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
       console.warn(`API connection failed to ${url}, using mock data instead`);
-      return getMockData(url) as T;
+      return getMockData(url, options) as T;
     }
     
     console.error('API Error:', error);
@@ -58,9 +58,9 @@ async function fetchWithErrorHandling<T>(
 }
 
 /**
- * Return mock data based on the requested endpoint
+ * Return mock data based on the requested endpoint and HTTP method
  */
-function getMockData(url: string): any {
+function getMockData(url: string, options?: RequestInit): any {
   // Base mock data structure
   const mockData = {
     success: true
@@ -68,25 +68,58 @@ function getMockData(url: string): any {
   
   // Extract the endpoint path
   const endpoint = url.replace(API_BASE_URL, '');
+  const method = options?.method || 'GET';
   
-  // Patient data
-  if (endpoint.match(/\/patients\/[^/]+$/)) {
+  // Get list of patients
+  if (endpoint === '/patients' && method === 'GET') {
     return {
       ...mockData,
-      patient: generateMockPatient(endpoint.split('/').pop() || 'new')
+      patients: generateMockPatientsList(10)
+    };
+  }
+  
+  // Create a new patient
+  if (endpoint === '/patients' && method === 'POST') {
+    const patientId = 'mock_' + Math.random().toString(36).substring(2, 9);
+    return {
+      ...mockData,
+      patient_id: patientId
+    };
+  }
+  
+  // Patient data
+  if (endpoint.match(/\/patients\/[^/]+$/) && method === 'GET') {
+    const patientId = endpoint.split('/').pop() || 'new';
+    return {
+      ...mockData,
+      patient: generateMockPatient(patientId)
+    };
+  }
+  
+  // Update patient
+  if (endpoint.match(/\/patients\/[^/]+$/) && method === 'PUT') {
+    return {
+      ...mockData
     };
   }
   
   // Vitals data
   if (endpoint.match(/\/patients\/[^/]+\/vitals$/)) {
-    return {
-      ...mockData,
-      vitals: generateMockVitals(endpoint.split('/')[2])
-    };
+    if (method === 'GET') {
+      return {
+        ...mockData,
+        vitals: generateMockVitals(endpoint.split('/')[2])
+      };
+    }
+    if (method === 'POST') {
+      return {
+        ...mockData
+      };
+    }
   }
   
   // Alerts data
-  if (endpoint.match(/\/patients\/[^/]+\/alerts$/)) {
+  if (endpoint.match(/\/patients\/[^/]+\/alerts$/) && method === 'GET') {
     return {
       ...mockData,
       alerts: generateMockAlerts(endpoint.split('/')[2])
@@ -94,10 +127,25 @@ function getMockData(url: string): any {
   }
   
   // Patient-doctor relationships
-  if (endpoint.match(/\/patients\/[^/]+\/doctors$/)) {
+  if (endpoint.match(/\/patients\/[^/]+\/doctors$/) && method === 'GET') {
     return {
       ...mockData,
       doctors: generateMockDoctors()
+    };
+  }
+  
+  // Analytics data
+  if (endpoint.match(/\/patients\/[^/]+\/analytics$/) && method === 'GET') {
+    return {
+      ...mockData,
+      analytics: generateMockAnalytics(endpoint.split('/')[2])
+    };
+  }
+  
+  // Simulate data
+  if (endpoint === '/simulate/data' && method === 'POST') {
+    return {
+      ...mockData
     };
   }
   
@@ -105,21 +153,62 @@ function getMockData(url: string): any {
   return { ...mockData };
 }
 
+// Generate a list of mock patients
+function generateMockPatientsList(count: number) {
+  const patients = [];
+  
+  for (let i = 0; i < count; i++) {
+    const patientId = 'mock_' + Math.random().toString(36).substring(2, 9);
+    const gender = Math.random() > 0.5 ? "Male" : "Female";
+    const firstName = gender === "Male" ? 
+      ["John", "James", "Robert", "Michael", "William"][Math.floor(Math.random() * 5)] : 
+      ["Mary", "Patricia", "Linda", "Barbara", "Elizabeth"][Math.floor(Math.random() * 5)];
+    
+    const lastName = ["Smith", "Johnson", "Williams", "Jones", "Brown"][Math.floor(Math.random() * 5)];
+    
+    patients.push({
+      _id: patientId,
+      name: `${firstName} ${lastName}`,
+      age: Math.floor(Math.random() * 50) + 20,
+      gender: gender,
+      blood_type: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"][Math.floor(Math.random() * 8)],
+      region: ["North", "South", "East", "West", "Central"][Math.floor(Math.random() * 5)],
+      medical_history: {
+        conditions: Math.random() > 0.5 ? ["Hypertension", "Diabetes"] : ["Asthma"],
+        allergies: Math.random() > 0.5 ? ["Penicillin"] : ["Dust", "Pollen"],
+        surgeries: Math.floor(Math.random() * 3)
+      },
+      created_at: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+      updated_at: new Date().toISOString(),
+      hasAlert: Math.random() > 0.8 // 20% chance of having alert
+    });
+  }
+  
+  return patients;
+}
+
 // Mock data generators
 function generateMockPatient(patientId: string) {
+  const gender = Math.random() > 0.5 ? "Male" : "Female";
+  const firstName = gender === "Male" ? 
+    ["John", "James", "Robert", "Michael", "William"][Math.floor(Math.random() * 5)] : 
+    ["Mary", "Patricia", "Linda", "Barbara", "Elizabeth"][Math.floor(Math.random() * 5)];
+  
+  const lastName = ["Smith", "Johnson", "Williams", "Jones", "Brown"][Math.floor(Math.random() * 5)];
+  
   return {
     _id: patientId,
-    name: `Test Patient ${patientId.substring(0, 5)}`,
-    age: 45,
-    gender: "Female",
-    blood_type: "O+",
+    name: `${firstName} ${lastName}`,
+    age: Math.floor(Math.random() * 50) + 20,
+    gender: gender,
+    blood_type: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"][Math.floor(Math.random() * 8)],
+    region: ["North", "South", "East", "West", "Central"][Math.floor(Math.random() * 5)],
     medical_history: {
-      conditions: ["Hypertension", "Diabetes"],
-      allergies: ["Penicillin"],
-      surgeries: 1
+      conditions: Math.random() > 0.5 ? ["Hypertension", "Diabetes"] : ["Asthma"],
+      allergies: Math.random() > 0.5 ? ["Penicillin"] : ["Dust", "Pollen"],
+      surgeries: Math.floor(Math.random() * 3)
     },
-    region: "North",
-    created_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
     updated_at: new Date().toISOString()
   };
 }
@@ -183,6 +272,26 @@ function generateMockDoctors() {
       since: new Date().toISOString()
     }
   ];
+}
+
+function generateMockAnalytics(patientId: string) {
+  const analytics = [];
+  const now = new Date();
+  
+  for (let i = 0; i < 24; i++) {
+    const timestamp = new Date(now.getTime() - (i * 60 * 60 * 1000));
+    
+    analytics.push({
+      timestamp: timestamp.toISOString(),
+      heart_rate_avg: Math.floor(60 + Math.random() * 40),
+      blood_pressure_systolic_avg: Math.floor(110 + Math.random() * 40),
+      blood_pressure_diastolic_avg: Math.floor(70 + Math.random() * 20),
+      temperature_avg: Math.round((36.5 + Math.random()) * 10) / 10,
+      oxygen_level_avg: Math.floor(92 + Math.random() * 8)
+    });
+  }
+  
+  return analytics;
 }
 
 // Patient API

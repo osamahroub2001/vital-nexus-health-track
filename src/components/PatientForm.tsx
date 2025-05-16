@@ -37,6 +37,7 @@ export function PatientForm({ onSuccess }: { onSuccess?: (patientId: string) => 
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      age: undefined, // Changed from undefined to properly handle controlled inputs
       gender: "",
       blood_type: "",
       region: "",
@@ -46,8 +47,10 @@ export function PatientForm({ onSuccess }: { onSuccess?: (patientId: string) => 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      // Make sure all required fields are included for the API
       const patientData = {
         ...values,
+        dob: values.dob || new Date().toISOString().split('T')[0], // Add a default DOB if not provided
         medical_history: {
           conditions: [],
           allergies: [],
@@ -69,6 +72,11 @@ export function PatientForm({ onSuccess }: { onSuccess?: (patientId: string) => 
       }
     } catch (error) {
       console.error("Failed to create patient:", error);
+      toast({
+        title: "Error",
+        description: "Failed to register patient. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +107,14 @@ export function PatientForm({ onSuccess }: { onSuccess?: (patientId: string) => 
               <FormItem>
                 <FormLabel>Age</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input 
+                    type="number" 
+                    value={field.value || ''} // Handle empty value correctly 
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

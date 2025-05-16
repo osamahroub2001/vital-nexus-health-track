@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Navbar from "@/components/Navbar";
 import PatientCard from "@/components/PatientCard";
 import { PatientForm } from "@/components/PatientForm";
@@ -21,30 +21,8 @@ const ManagePatients = () => {
   const { toast } = useToast();
   
   useEffect(() => {
-    const fetchPatients = async () => {
-      setIsLoading(true);
-      try {
-        // Initialize data if needed
-        await simulationAPI.simulateData();
-        
-        // In a real implementation, we would fetch patients from the API
-        // For now, we'll leave patients as an empty array since the API isn't connected
-        setPatients([]);
-        setFilteredPatients([]);
-      } catch (error) {
-        console.error("Error fetching patients:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load patients. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchPatients();
-  }, [toast]);
+  }, []);
   
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -70,21 +48,16 @@ const ManagePatients = () => {
       description: "New patient has been successfully registered.",
     });
     
-    // In a real implementation, we would fetch the new patient data
-    // For now, we'll just refresh the patients list
     fetchPatients();
   };
   
   const fetchPatients = async () => {
     setIsLoading(true);
     try {
-      // Initialize data if needed
       await simulationAPI.simulateData();
-      
-      // In a real implementation, we would fetch patients from the API
-      // For now, we'll leave patients as an empty array
-      setPatients([]);
-      setFilteredPatients([]);
+      const patientsData = await patientAPI.getPatients();
+      setPatients(patientsData || []);
+      setFilteredPatients(patientsData || []);
     } catch (error) {
       console.error("Error fetching patients:", error);
       toast({
@@ -92,6 +65,9 @@ const ManagePatients = () => {
         description: "Failed to load patients. Please try again later.",
         variant: "destructive",
       });
+      // Set empty arrays in case of error
+      setPatients([]);
+      setFilteredPatients([]);
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +90,9 @@ const ManagePatients = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Register New Patient</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to register a new patient to the system.
+                </DialogDescription>
               </DialogHeader>
               <PatientForm onSuccess={handleAddPatient} />
             </DialogContent>
@@ -172,6 +151,9 @@ const ManagePatients = () => {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Register New Patient</DialogTitle>
+                    <DialogDescription>
+                      Fill out the form below to register a new patient to the system.
+                    </DialogDescription>
                   </DialogHeader>
                   <PatientForm onSuccess={handleAddPatient} />
                 </DialogContent>
